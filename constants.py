@@ -1,0 +1,8 @@
+REG_A=0
+REG_B=1
+REG_C=2
+REG_X=3
+REG_Y=4
+REG_Z=5
+REG_I=6
+REG_J=7

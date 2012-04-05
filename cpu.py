@@ -1,19 +1,19 @@
 """ Implementation of DCPU-16 """
-from values import RegisterValue, RegisterRamValue
-
-# REGISTERS
-A=0
-B=1
-C=2
-X=3
-Y=4
-Z=5
-I=6
-J=7
+from values import create_value_dict
+from constants import REG_A, REG_B, REG_C, REG_X, REG_Y, REG_Z, REG_I, REG_J
 
 class CPU(object):
     def __init__(self):
-        self.registers = { A: 0, B: 0, C: 0, X: 0, Y: 0, Z: 0, I: 0, J: 0 } 
+        self.registers = { 
+            REG_A: 0, 
+            REG_B: 0, 
+            REG_C: 0, 
+            REG_X: 0, 
+            REG_Y: 0, 
+            REG_Z: 0, 
+            REG_I: 0, 
+            REG_J: 0 
+        } 
         self.ram = range(0x10000)
         self.SP=0xffff
         self.PC=0
@@ -36,44 +36,23 @@ class CPU(object):
             0xf: self.IFB,
         }
 
-        self.VALUES = {
-            0x0:  RegisterValue(A),
-            0x1:  RegisterValue(B),
-            0x2:  RegisterValue(C),
-            0x3:  RegisterValue(X),
-            0x4:  RegisterValue(Y),
-            0x5:  RegisterValue(Z),
-            0x6:  RegisterValue(I),
-            0x7:  RegisterValue(J),
-
-            0x8:  RegisterRamValue(A),
-            0x9:  RegisterRamValue(B),
-            0xa:  RegisterRamValue(C),
-            0xb:  RegisterRamValue(X),
-            0xc:  RegisterRamValue(Y),
-            0xd:  RegisterRamValue(Z),
-            0xe:  RegisterRamValue(I),
-            0xf:  RegisterRamValue(J),
-            # ----------------------
-            # [Next word + register]
-            # ----------------------
-            #0x18: self.pop, 
-            #0x19: self.peek, 
-            #0x1a: self.push, 
-            #0x1b: lambda: self.SP,
-            #0x1c: lambda: self.PC,
-            #0x1d: lambda: self.O,
-            #0x1e: lambda: self.O,
-        }
+        self.VALUES = create_value_dict()
 
 
     def dispatch(self):
         """ Execute instruction at [PC] """
-        word = self.ram[self.PC]
-        print word
+        instruction = self.ram[self.PC]
+        op_code = instruction & 0xf
+        oper1 = (instruction & 0x2f0) >> 4
+        oper2 = (instruction & 0xfd00) >> 10
+        if op_code == 0x00:
+            print "Only basic instructions supported"
+            exit(1)
+        self.BASIC_INSTRUCTIONS[op_code](oper1, oper2)
+        self.PC += 1
 
     def SET(self, a, b):
-        self.values[a].set(self.values[b].get())
+        self.VALUES[a].set(self, self.VALUES[b].get(self))
 
     def ADD(self, a, b):
         pass
@@ -117,3 +96,9 @@ class CPU(object):
     def IFB(self, a, b):
         pass
 
+if __name__ == '__main__':
+    cpu = CPU()
+    cpu.ram[0] = 0x7c01
+    cpu.dispatch()
+    #cpu.ram[0] = 0xa861
+    #cpu.dispatch()
