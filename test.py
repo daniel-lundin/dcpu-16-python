@@ -126,6 +126,17 @@ class TestValues(unittest.TestCase):
 
         self.assertTrue(cpu.registers[REG_X] == 0x1212, "Ram of next word error")
 
+    def test_next_word_literal(self):
+        """ Reads next word as a literal """
+        cpu = CPU()
+
+        # next word(literal) REG_A  SET
+        # 11111              000000 0001
+        cpu.ram[0] = 0x7c01
+        cpu.ram[1] = 0x1234
+        cpu.dispatch()
+
+        self.assertTrue(cpu.registers[REG_A] == 0x1234, "Next word as literal error")
 if __name__ == '__main__':
     unittest.main()
 

@@ -43,6 +43,15 @@ class RamOfNextWord(object):
         cpu.PC += 1
         cpu.ram[cpu.ram[cpu.PC]] = value.get(cpu)
 
+class NextWordLiteral(object):
+    def get(self, cpu):
+        cpu.PC += 1
+        return cpu.ram[cpu.PC]
+
+    def set(self, cpu, value):
+        cpu.PC += 1
+        print 'illegal set of literal'
+
 class Literal(object):
     def __init__(self, value):
         self.value = value
@@ -133,6 +142,7 @@ def create_value_dict():
             0x1c: PCValue(),
             0x1d: OValue(),
             0x1e: RamOfNextWord(),
+            0x1f: NextWordLiteral(),
             # Literals
             0x20: Literal(0x00),
             0x21: Literal(0x01),
