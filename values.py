@@ -6,7 +6,7 @@ class RegisterValue(object):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.registers[self.register] = val 
+        cpu.registers[self.register] = val
 
     def get(self, cpu):
         return cpu.registers[self.register]
@@ -17,10 +17,21 @@ class RegisterRamValue(object):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.ram[cpu.registers[self.register]] = val 
+        cpu.ram[cpu.registers[self.register]] = val
 
     def get(self, cpu):
         return cpu.ram[cpu.registers[self.register]]
+
+class RegisterRamNextWordOffset(object):
+    def __init__(self, register):
+        self.register = register
+
+    def set(self, cpu, val):
+        cpu.PC += 1
+        cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]] = val
+
+    def get(self, cpu):
+        return cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]]
 
 class Literal(object):
     def __init__(self, value):
@@ -96,11 +107,16 @@ def create_value_dict():
             0xd:  RegisterRamValue(REG_Z),
             0xe:  RegisterRamValue(REG_I),
             0xf:  RegisterRamValue(REG_J),
-            # ----------------------
-            # [Next word + register]
-            # ----------------------
+            0x10: RegisterRamNextWordOffset(REG_A),
+            0x11: RegisterRamNextWordOffset(REG_B),
+            0x12: RegisterRamNextWordOffset(REG_C),
+            0x13: RegisterRamNextWordOffset(REG_X),
+            0x14: RegisterRamNextWordOffset(REG_Y),
+            0x15: RegisterRamNextWordOffset(REG_Z),
+            0x16: RegisterRamNextWordOffset(REG_I),
+            0x17: RegisterRamNextWordOffset(REG_J),
             0x18: StackPop(),
-            0x19: StackPeek(), 
+            0x19: StackPeek(),
             0x1a: StackPush(),
             0x1b: SPValue(),
             0x1c: PCValue(),

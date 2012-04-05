@@ -67,7 +67,7 @@ class TestValues(unittest.TestCase):
     def test_set_sp(self):
         """ Sets SP """
         cpu = CPU()
-        
+
         # 0x2    SP     SET
         # 100010 011011 0001
         cpu.ram[0] = 0x89b1
@@ -78,7 +78,7 @@ class TestValues(unittest.TestCase):
     def test_set_pc(self):
         """ Sets PC """
         cpu = CPU()
-        
+
         # 0x2    PC     SET
         # 100010 011100 0001
         cpu.ram[0] = 0x89c1
@@ -90,13 +90,27 @@ class TestValues(unittest.TestCase):
         """ Reads O into register """
         cpu = CPU()
         cpu.O = 0xffff
-        
+
         # O      REG_A  SET
         # 011101 000000 0001
         cpu.ram[0] = 0x7401
         cpu.dispatch()
 
         self.assertTrue(cpu.O == 0xffff, "O Loading failed")
+
+    def test_next_word_register(self):
+        """ [Next word + register]  into register """
+        cpu = CPU()
+        cpu.registers[REG_B] = 0x10
+        cpu.ram[0x20] = 0xfeed
+
+        # [next word + REG_B] REG_C     SET
+        # 10001               000010    0001
+        cpu.ram[0] = 0x4421
+        cpu.ram[1] = 0x10
+        cpu.dispatch()
+
+        self.assertTrue(cpu.registers[REG_C] == 0xfeed, "Register + offset failed")
 
 if __name__ == '__main__':
     unittest.main()
