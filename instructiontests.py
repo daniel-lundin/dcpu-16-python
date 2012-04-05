@@ -14,7 +14,6 @@ class TestInstructions(unittest.TestCase):
         cpu.registers[REG_B] = 0x34
 
         cpu.ram[0] = pack_instruction(op_code=0x2, oper1=0x0, oper2=0x1)
-#0x401
         cpu.dispatch()
 
         self.assertTrue(cpu.registers[REG_A] == 0x46, "Add failed")
@@ -156,6 +155,86 @@ class TestInstructions(unittest.TestCase):
         cpu.dispatch()
 
         self.assertTrue(cpu.registers[REG_A] == 0xf0, "xor failed")
+
+    def test_ife_equal(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ff
+
+        cpu.ram[0] = pack_instruction(op_code=0xc, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 1, "PC not set right")
+
+    def test_ife_notequal(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ef
+
+        cpu.ram[0] = pack_instruction(op_code=0xc, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 2, "PC not set right")
+
+    def test_ifn_false(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ff
+
+        cpu.ram[0] = pack_instruction(op_code=0xd, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 2, "PC not set right")
+
+    def test_ifn_true(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ef
+
+        cpu.ram[0] = pack_instruction(op_code=0xd, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 1, "PC not set right")
+
+    def test_ifg_false(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ff
+
+        cpu.ram[0] = pack_instruction(op_code=0xe, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 2, "PC not set right")
+
+    def test_ifg_true(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ef
+
+        cpu.ram[0] = pack_instruction(op_code=0xe, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 1, "PC not set right")
+
+    def test_ifb_true(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x00ff
+
+        cpu.ram[0] = pack_instruction(op_code=0xf, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 1, "PC not set right")
+
+    def test_ifb_notequal(self):
+        cpu = CPU()
+        cpu.registers[REG_A] = 0x00ff
+        cpu.registers[REG_B] = 0x0000
+
+        cpu.ram[0] = pack_instruction(op_code=0xf, oper1=0x0, oper2=0x1)
+        cpu.dispatch()
+
+        self.assertTrue(cpu.PC == 2, "PC not set right")
 
 if __name__ == '__main__':
     unittest.main()

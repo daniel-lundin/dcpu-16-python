@@ -120,6 +120,6 @@ class CPU(object):
             self.PC += 1
 
     def IFB(self, a, b):
-        if a.get(self) <= b.get(self):
+        if not (a.get(self) & b.get(self)) != 0:
             self.PC += 1
 
