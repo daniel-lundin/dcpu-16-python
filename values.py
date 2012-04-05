@@ -1,58 +1,67 @@
 from constants import REG_A, REG_B, REG_C, REG_X, REG_Y, REG_Z, REG_I, REG_J
 
-class RegisterValue(object):
+class Value(object):
+    def eval(self, cpu):
+        """ Called once before any call to get/set """
+        pass
+
+class RegisterValue(Value):
 
     def __init__(self, register):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.registers[self.register] = val.get(cpu)
+        cpu.registers[self.register] = val
 
     def get(self, cpu):
         return cpu.registers[self.register]
 
-class RegisterRamValue(object):
+class RegisterRamValue(Value):
 
     def __init__(self, register):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.ram[cpu.registers[self.register]] = val.get(cpu)
+        cpu.ram[cpu.registers[self.register]] = val
 
     def get(self, cpu):
         return cpu.ram[cpu.registers[self.register]]
 
-class RegisterRamNextWordOffset(object):
+class RegisterRamNextWordOffset(Value):
     def __init__(self, register):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.PC += 1
-        cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]] = val.get(cpu)
+        cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]] = val
 
     def get(self, cpu):
-        cpu.PC += 1
         return cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]]
 
-class RamOfNextWord(object):
-    def get(self, cpu):
+    def eval(self, cpu):
         cpu.PC += 1
+
+class RamOfNextWord(Value):
+    def get(self, cpu):
         return cpu.ram[cpu.ram[cpu.PC]]
 
     def set(self, cpu, value):
-        cpu.PC += 1
-        cpu.ram[cpu.ram[cpu.PC]] = value.get(cpu)
+        cpu.ram[cpu.ram[cpu.PC]] = value
 
-class NextWordLiteral(object):
-    def get(self, cpu):
+    def eval(self, cpu):
         cpu.PC += 1
+
+class NextWordLiteral(Value):
+    def get(self, cpu):
         return cpu.ram[cpu.PC]
 
     def set(self, cpu, value):
-        cpu.PC += 1
         print 'illegal set of literal'
 
-class Literal(object):
+    def eval(self, cpu):
+        cpu.PC += 1
+
+    
+class Literal(Value):
     def __init__(self, value):
         self.value = value
 
@@ -62,7 +71,10 @@ class Literal(object):
     def set(self, cpu, value):
         print "Illegal set on literal"
 
-class StackPop(object):
+    def add(self, cpu, value):
+        print "Illegal set on literal"
+
+class StackPop(Value):
     def get(self, cpu):
         val = cpu.ram[cpu.SP]
         cpu.SP += 1
@@ -71,42 +83,42 @@ class StackPop(object):
     def set(self, cpu, value):
         print 'stack pop put?'
 
-class StackPush(object):
+
+class StackPush(Value):
     def get(self, cpu):
         print 'error: reading push'
 
     def set(self, cpu, value):
         cpu.SP -= 1
-        cpu.ram[cpu.SP] = value.get(cpu)
+        cpu.ram[cpu.SP] = value
 
-class StackPeek(object):
+class StackPeek(Value):
     def get(self, cpu):
         return cpu.ram[cpu.SP]
 
     def set(self, cpu, value):
-        cpu.ram[cpu.SP] = value.get(cpu)
+        cpu.ram[cpu.SP] = value
 
-class SPValue(object):
+class SPValue(Value):
     def get(self, cpu):
         return CPU.SP
 
     def set(self, cpu, value):
-        cpu.SP = value.get(cpu)
+        cpu.SP = value
 
-class PCValue(object):
+class PCValue(Value):
     def get(self, cpu):
         return CPU.PC
 
     def set(self, cpu, value):
-        cpu.PC = value.get(cpu)
+        cpu.PC = value
 
-class OValue(object):
+class OValue(Value):
     def get(self, cpu):
         return cpu.O
 
     def set(self, cpu, value):
-        cpu.O = value.get(cpu)
-
+        cpu.O = value
 
 def create_value_dict():
         return {

@@ -14,7 +14,7 @@ class CPU(object):
             REG_I: 0,
             REG_J: 0
         }
-        self.ram = range(0x10000)
+        self.ram = [0 for _ in range(0x10000)]
         self.SP=0xffff
         self.PC=0
         self.O=0x0
@@ -48,51 +48,78 @@ class CPU(object):
         if op_code == 0x00:
             print "Only basic instructions supported"
             exit(1)
-        self.BASIC_INSTRUCTIONS[op_code](oper1, oper2)
+        a = self.VALUES[oper1]
+        b = self.VALUES[oper2]
+        a.eval(self)
+        b.eval(self)
+        self.BASIC_INSTRUCTIONS[op_code](a, b)
         self.PC += 1
 
     def SET(self, a, b):
-        self.VALUES[a].set(self, self.VALUES[b])
+        a.set(self, b.get(self))
 
     def ADD(self, a, b):
-        pass
+        sum = a.get(self) + b.get(self)
+        self.O = 0xffff if sum > 0xffff else 0
+        sum = sum & 0xffff
+        a.set(self, sum)
 
     def SUB(self, a, b):
-        pass
+        res = a.get(self) - b.get(self)
+        self.O = 0x0
+        if res < 0:
+            self.O = 0xffff
+            res = -1*res
+        a.set(self, res)
 
     def MUL(self, a, b):
-        pass
+        res = a.get(self) * b.get(self)
+        self.O = (res>>16)&0xffff
+        res = res & 0xffff
+        a.set(self, res)
 
     def DIV(self, a, b):
-        pass
+        bval = b.get(self)
+        if bval == 0:
+            a.set(self, 0)
+        aval = a.get(self)
+        a.set(self, aval/bval)
+        self.O == ((aval<<16)/bval)&0xffff
 
     def MOD(self, a, b):
-        pass
+        a.set(self, a.get(self) % b.get(self))
 
     def SHL(self, a, b):
-        pass
+        a.set(self, a.get(self) << b.get(self))
+        self.O = (a.get(self) << b.get(self) >> 16) & 0xfff
 
     def SHR(self, a, b):
-        pass
+        a.set(self, a.get(self) >> b.get(self))
+        self.O = (a.get(self) << 16) >> b.get(self) & 0xfff
+
 
     def AND(self, a, b):
-        pass
+        a.set(self, a.get(self) & b.get(self))
 
     def BOR(self, a, b):
-        pass
+        a.set(self, a.get(self) | b.get(self))
 
     def XOR(self, a, b):
-        pass
+        a.set(self, a.get(self) ^ b.get(self))
 
     def IFE(self, a, b):
-        pass
+        if a.get(self) != b.get(self):
+            self.PC += 1
 
     def IFN(self, a, b):
-        pass
+        if a.get(self) == b.get(self):
+            self.PC += 1
 
     def IFG(self, a, b):
-        pass
+        if a.get(self) <= b.get(self):
+            self.PC += 1
 
     def IFB(self, a, b):
-        pass
+        if a.get(self) <= b.get(self):
+            self.PC += 1
 
