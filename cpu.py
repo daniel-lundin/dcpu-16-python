@@ -17,7 +17,7 @@ class CPU(object):
         self.ram = range(0x10000)
         self.SP=0xffff
         self.PC=0
-        self.O=False
+        self.O=0x0
         self.BASIC_INSTRUCTIONS = {
             0x1: self.SET,
             0x2: self.ADD,
@@ -42,14 +42,14 @@ class CPU(object):
     def dispatch(self):
         """ Execute instruction at [PC] """
         instruction = self.ram[self.PC]
+        self.PC += 1
         op_code = instruction & 0xf
-        oper1 = (instruction & 0x2f0) >> 4
+        oper1 = (instruction & 0x3f0) >> 4
         oper2 = (instruction & 0xfd00) >> 10
         if op_code == 0x00:
             print "Only basic instructions supported"
             exit(1)
         self.BASIC_INSTRUCTIONS[op_code](oper1, oper2)
-        self.PC += 1
 
     def SET(self, a, b):
         self.VALUES[a].set(self, self.VALUES[b].get(self))

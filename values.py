@@ -32,6 +32,51 @@ class Literal(object):
     def set(self, cpu, value):
         print "Illegal set on literal"
 
+class StackPop(object):
+    def get(self, cpu):
+        val = cpu.ram[cpu.SP]
+        cpu.SP += 1
+        return val
+
+    def set(self, cpu, value):
+        print 'stack pop put?'
+
+class StackPush(object):
+    def get(self, cpu):
+        print 'error: reading push'
+
+    def set(self, cpu, value):
+        cpu.SP -= 1
+        cpu.ram[cpu.SP] = value
+
+class StackPeek(object):
+    def get(self, cpu):
+        return cpu.ram[cpu.SP]
+
+    def set(self, cpu, value):
+        cpu.ram[cpu.SP] = value
+
+class SPValue(object):
+    def get(self, cpu):
+        return CPU.SP
+
+    def set(self, cpu, value):
+        cpu.SP = value
+
+class PCValue(object):
+    def get(self, cpu):
+        return CPU.PC
+
+    def set(self, cpu, value):
+        cpu.PC = value
+
+class OValue(object):
+    def get(self, cpu):
+        return cpu.O
+
+    def set(self, cpu, value):
+        cpu.O = value
+
 def create_value_dict():
         return {
             0x0:  RegisterValue(REG_A),
@@ -54,12 +99,12 @@ def create_value_dict():
             # ----------------------
             # [Next word + register]
             # ----------------------
-            #0x18: self.pop, 
-            #0x19: self.peek, 
-            #0x1a: self.push, 
-            #0x1b: lambda: self.SP,
-            #0x1c: lambda: self.PC,
-            #0x1d: lambda: self.O,
+            0x18: StackPop(),
+            0x19: StackPeek(), 
+            0x1a: StackPush(),
+            0x1b: SPValue(),
+            0x1c: PCValue(),
+            0x1d: OValue(),
             #0x1e: lambda: self.O,
             # Literals
             0x20: Literal(0x00),
