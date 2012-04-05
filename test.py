@@ -84,7 +84,8 @@ class TestValues(unittest.TestCase):
         cpu.ram[0] = 0x89c1
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 0x2, "PC Loading failed")
+        # CPU increases PC by one for each instruction
+        self.assertTrue(cpu.PC == 0x3, "PC Loading failed")
 
     def test_read_o(self):
         """ Reads O into register """
@@ -111,6 +112,19 @@ class TestValues(unittest.TestCase):
         cpu.dispatch()
 
         self.assertTrue(cpu.registers[REG_C] == 0xfeed, "Register + offset failed")
+
+    def test_ram_of_next_word(self):
+        """ Reads from register to ram of next word into register"""
+        cpu = CPU()
+        cpu.ram[0x44] = 0x1212
+
+        # [next word] REG_D  SET
+        # 11110       000011 0001
+        cpu.ram[0] = 0x7831
+        cpu.ram[1] = 0x44
+        cpu.dispatch()
+
+        self.assertTrue(cpu.registers[REG_X] == 0x1212, "Ram of next word error")
 
 if __name__ == '__main__':
     unittest.main()

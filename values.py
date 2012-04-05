@@ -6,7 +6,7 @@ class RegisterValue(object):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.registers[self.register] = val
+        cpu.registers[self.register] = val.get(cpu)
 
     def get(self, cpu):
         return cpu.registers[self.register]
@@ -17,7 +17,7 @@ class RegisterRamValue(object):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.ram[cpu.registers[self.register]] = val
+        cpu.ram[cpu.registers[self.register]] = val.get(cpu)
 
     def get(self, cpu):
         return cpu.ram[cpu.registers[self.register]]
@@ -28,10 +28,20 @@ class RegisterRamNextWordOffset(object):
 
     def set(self, cpu, val):
         cpu.PC += 1
-        cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]] = val
+        cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]] = val.get(cpu)
 
     def get(self, cpu):
+        cpu.PC += 1
         return cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]]
+
+class RamOfNextWord(object):
+    def get(self, cpu):
+        cpu.PC += 1
+        return cpu.ram[cpu.ram[cpu.PC]]
+
+    def set(self, cpu, value):
+        cpu.PC += 1
+        cpu.ram[cpu.ram[cpu.PC]] = value.get(cpu)
 
 class Literal(object):
     def __init__(self, value):
@@ -58,35 +68,36 @@ class StackPush(object):
 
     def set(self, cpu, value):
         cpu.SP -= 1
-        cpu.ram[cpu.SP] = value
+        cpu.ram[cpu.SP] = value.get(cpu)
 
 class StackPeek(object):
     def get(self, cpu):
         return cpu.ram[cpu.SP]
 
     def set(self, cpu, value):
-        cpu.ram[cpu.SP] = value
+        cpu.ram[cpu.SP] = value.get(cpu)
 
 class SPValue(object):
     def get(self, cpu):
         return CPU.SP
 
     def set(self, cpu, value):
-        cpu.SP = value
+        cpu.SP = value.get(cpu)
 
 class PCValue(object):
     def get(self, cpu):
         return CPU.PC
 
     def set(self, cpu, value):
-        cpu.PC = value
+        cpu.PC = value.get(cpu)
 
 class OValue(object):
     def get(self, cpu):
         return cpu.O
 
     def set(self, cpu, value):
-        cpu.O = value
+        cpu.O = value.get(cpu)
+
 
 def create_value_dict():
         return {
@@ -121,7 +132,7 @@ def create_value_dict():
             0x1b: SPValue(),
             0x1c: PCValue(),
             0x1d: OValue(),
-            #0x1e: lambda: self.O,
+            0x1e: RamOfNextWord(),
             # Literals
             0x20: Literal(0x00),
             0x21: Literal(0x01),
