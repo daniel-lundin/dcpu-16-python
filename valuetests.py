@@ -2,7 +2,8 @@ import random
 import unittest
 
 from cpu import CPU
-from constants import *
+from constants import REG, OPCODE
+from utils import pack_instruction
 
 class TestValues(unittest.TestCase):
 
@@ -11,17 +12,17 @@ class TestValues(unittest.TestCase):
         cpu = CPU()
         cpu.ram[0] = 0xc001 # SET A, 0x10
         cpu.dispatch()
-        self.assertTrue(cpu.registers[REG_A] == 0x10, "Register value error")
+        self.assertTrue(cpu.registers[REG.A] == 0x10, "Register value error")
 
     def test_set_addr_of_reg(self):
-        """ Sets ram pointed by REG_I to value of REG_B """
+        """ Sets ram pointed by REG.I to value of REG.B """
         cpu = CPU()
         # Arrange
-        cpu.registers[REG_I] = 0xff
-        cpu.registers[REG_B] = 0x11
+        cpu.registers[REG.I] = 0xff
+        cpu.registers[REG.B] = 0x11
 
         # Act
-        # REG_B  [REG_I] SET
+        # REG.B  [REG.I] SET
         # 000001 001110  0001
         cpu.ram[0] = 0x4e1 # SET [I], B
         cpu.dispatch()
@@ -33,17 +34,17 @@ class TestValues(unittest.TestCase):
         cpu = CPU()
         cpu.ram[cpu.SP] = 0xdead
 
-        # POP     REG_A  SET
+        # POP     REG.A  SET
         # 011000  000000 0001
         cpu.ram[0] = 0x6001 # SET A, PUSH
         cpu.dispatch()
 
-        self.assertTrue(cpu.registers[REG_A] == 0xdead, "Stack popping b0rked")
+        self.assertTrue(cpu.registers[REG.A] == 0xdead, "Stack popping b0rked")
 
     def test_push_from_register(self):
         """ Pushed value in register to stack """
         cpu = CPU()
-        cpu.registers[REG_A] = 0xdead
+        cpu.registers[REG.A] = 0xdead
 
         # POP     PUSH   SET
         # 000000  011010 0001
@@ -57,12 +58,12 @@ class TestValues(unittest.TestCase):
         cpu = CPU()
         cpu.ram[cpu.SP] = 0xbeef
 
-        # PEEK   REG_A   SET
+        # PEEK   REG.A   SET
         # 011001 000000  0001
         cpu.ram[0] = 0x6401 # SET A, PEEK
         cpu.dispatch()
 
-        self.assertTrue(cpu.registers[REG_A] == 0xbeef, "Stack peeking b0rked")
+        self.assertTrue(cpu.registers[REG.A] == 0xbeef, "Stack peeking b0rked")
 
     def test_set_sp(self):
         """ Sets SP """
@@ -79,20 +80,17 @@ class TestValues(unittest.TestCase):
         """ Sets PC """
         cpu = CPU()
 
-        # 0x2    PC     SET
-        # 100010 011100 0001
-        cpu.ram[0] = 0x89c1
+        cpu.ram[0] = pack_instruction(OPCODE.SET, REG.PC, 0x25)
         cpu.dispatch()
 
-        # CPU increases PC by one for each instruction
-        self.assertTrue(cpu.PC == 0x3, "PC Loading failed")
+        self.assertEqual(cpu.PC, 0x5, "PC Loading failed")
 
     def test_read_o(self):
         """ Reads O into register """
         cpu = CPU()
         cpu.O = 0xffff
 
-        # O      REG_A  SET
+        # O      REG.A  SET
         # 011101 000000 0001
         cpu.ram[0] = 0x7401
         cpu.dispatch()
@@ -102,41 +100,57 @@ class TestValues(unittest.TestCase):
     def test_next_word_register(self):
         """ [Next word + register]  into register """
         cpu = CPU()
-        cpu.registers[REG_B] = 0x10
+        cpu.registers[REG.B] = 0x10
         cpu.ram[0x20] = 0xfeed
 
-        # [next word + REG_B] REG_C     SET
+        # [next word + REG.B] REG.C     SET
         # 10001               000010    0001
         cpu.ram[0] = 0x4421
         cpu.ram[1] = 0x10
         cpu.dispatch()
 
-        self.assertTrue(cpu.registers[REG_C] == 0xfeed, "Register + offset failed")
+        self.assertTrue(cpu.registers[REG.C] == 0xfeed, "Register + offset failed")
+
+    def test_next_word_register_both(self):
+        """ [Next word + register] into [Next word + register] """
+        cpu = CPU()
+        cpu.registers[REG.B] = 0x10
+        cpu.registers[REG.C] = 0x20
+        cpu.ram[0x40] = 0xfeed
+
+        # SET [0x0010 + B], [0x0020 + C]
+        cpu.ram[0] = pack_instruction(op_code=0x1, oper1=0x11, oper2=0x12)
+        cpu.ram[1] = 0x10
+        cpu.ram[2] = 0x20
+        cpu.dispatch()
+
+        self.assertEqual(cpu.ram[0x20], 0xfeed, "Register + offset failed")
+        self.assertEqual(cpu.PC, 0x3, "PC not set correctly")
 
     def test_ram_of_next_word(self):
         """ Reads from register to ram of next word into register"""
         cpu = CPU()
         cpu.ram[0x44] = 0x1212
 
-        # [next word] REG_D  SET
+        # [next word] REG.D  SET
         # 11110       000011 0001
         cpu.ram[0] = 0x7831
         cpu.ram[1] = 0x44
         cpu.dispatch()
 
-        self.assertTrue(cpu.registers[REG_X] == 0x1212, "Ram of next word error")
+        self.assertTrue(cpu.registers[REG.X] == 0x1212, "Ram of next word error")
 
     def test_next_word_literal(self):
         """ Reads next word as a literal """
         cpu = CPU()
 
-        # next word(literal) REG_A  SET
+        # next word(literal) REG.A  SET
         # 11111              000000 0001
-        cpu.ram[0] = 0x7c01
+        cpu.ram[0] = pack_instruction(OPCODE.SET, REG.A, 0x1f)
         cpu.ram[1] = 0x1234
         cpu.dispatch()
 
-        self.assertTrue(cpu.registers[REG_A] == 0x1234, "Next word as literal error")
+        self.assertTrue(cpu.registers[REG.A] == 0x1234, "Next word as literal error")
 if __name__ == '__main__':
     unittest.main()
 

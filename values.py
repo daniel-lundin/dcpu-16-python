@@ -1,4 +1,4 @@
-from constants import REG_A, REG_B, REG_C, REG_X, REG_Y, REG_Z, REG_I, REG_J
+from constants import REG
 
 class Value(object):
     def eval(self, cpu):
@@ -32,32 +32,35 @@ class RegisterRamNextWordOffset(Value):
         self.register = register
 
     def set(self, cpu, val):
-        cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]] = val
+        cpu.ram[cpu.registers[self.register] + cpu.ram[self._PC]] = val
 
     def get(self, cpu):
-        return cpu.ram[cpu.registers[self.register] + cpu.ram[cpu.PC]]
+        return cpu.ram[cpu.registers[self.register] + cpu.ram[self._PC]]
 
     def eval(self, cpu):
+        self._PC = cpu.PC # Save pc at time of eval
         cpu.PC += 1
 
 class RamOfNextWord(Value):
     def get(self, cpu):
-        return cpu.ram[cpu.ram[cpu.PC]]
+        return cpu.ram[cpu.ram[self._PC]]
 
     def set(self, cpu, value):
-        cpu.ram[cpu.ram[cpu.PC]] = value
+        cpu.ram[cpu.ram[self._PC]] = value
 
     def eval(self, cpu):
+        self._PC = cpu.PC
         cpu.PC += 1
 
 class NextWordLiteral(Value):
     def get(self, cpu):
-        return cpu.ram[cpu.PC]
+        return cpu.ram[self._PC]
 
     def set(self, cpu, value):
         print 'illegal set of literal'
 
     def eval(self, cpu):
+        self._PC = cpu.PC
         cpu.PC += 1
 
     
@@ -122,31 +125,31 @@ class OValue(Value):
 
 def create_value_dict():
         return {
-            0x0:  RegisterValue(REG_A),
-            0x1:  RegisterValue(REG_B),
-            0x2:  RegisterValue(REG_C),
-            0x3:  RegisterValue(REG_X),
-            0x4:  RegisterValue(REG_Y),
-            0x5:  RegisterValue(REG_Z),
-            0x6:  RegisterValue(REG_I),
-            0x7:  RegisterValue(REG_J),
+            0x0:  RegisterValue(REG.A),
+            0x1:  RegisterValue(REG.B),
+            0x2:  RegisterValue(REG.C),
+            0x3:  RegisterValue(REG.X),
+            0x4:  RegisterValue(REG.Y),
+            0x5:  RegisterValue(REG.Z),
+            0x6:  RegisterValue(REG.I),
+            0x7:  RegisterValue(REG.J),
 
-            0x8:  RegisterRamValue(REG_A),
-            0x9:  RegisterRamValue(REG_B),
-            0xa:  RegisterRamValue(REG_C),
-            0xb:  RegisterRamValue(REG_X),
-            0xc:  RegisterRamValue(REG_Y),
-            0xd:  RegisterRamValue(REG_Z),
-            0xe:  RegisterRamValue(REG_I),
-            0xf:  RegisterRamValue(REG_J),
-            0x10: RegisterRamNextWordOffset(REG_A),
-            0x11: RegisterRamNextWordOffset(REG_B),
-            0x12: RegisterRamNextWordOffset(REG_C),
-            0x13: RegisterRamNextWordOffset(REG_X),
-            0x14: RegisterRamNextWordOffset(REG_Y),
-            0x15: RegisterRamNextWordOffset(REG_Z),
-            0x16: RegisterRamNextWordOffset(REG_I),
-            0x17: RegisterRamNextWordOffset(REG_J),
+            0x8:  RegisterRamValue(REG.A),
+            0x9:  RegisterRamValue(REG.B),
+            0xa:  RegisterRamValue(REG.C),
+            0xb:  RegisterRamValue(REG.X),
+            0xc:  RegisterRamValue(REG.Y),
+            0xd:  RegisterRamValue(REG.Z),
+            0xe:  RegisterRamValue(REG.I),
+            0xf:  RegisterRamValue(REG.J),
+            0x10: RegisterRamNextWordOffset(REG.A),
+            0x11: RegisterRamNextWordOffset(REG.B),
+            0x12: RegisterRamNextWordOffset(REG.C),
+            0x13: RegisterRamNextWordOffset(REG.X),
+            0x14: RegisterRamNextWordOffset(REG.Y),
+            0x15: RegisterRamNextWordOffset(REG.Z),
+            0x16: RegisterRamNextWordOffset(REG.I),
+            0x17: RegisterRamNextWordOffset(REG.J),
             0x18: StackPop(),
             0x19: StackPeek(),
             0x1a: StackPush(),
