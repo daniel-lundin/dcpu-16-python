@@ -148,6 +148,7 @@ class TestValues(unittest.TestCase):
         # 11111              000000 0001
         cpu.ram[0] = pack_instruction(OPCODE.SET, REG.A, 0x1f)
         cpu.ram[1] = 0x1234
+
         cpu.dispatch()
 
         self.assertTrue(cpu.registers[REG.A] == 0x1234, "Next word as literal error")

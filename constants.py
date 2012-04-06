@@ -28,3 +28,21 @@ class OPCODE(object):
     IFN = 0xd 
     IFG = 0xe 
     IFB = 0xf 
+
+opcode_to_instruction = {
+    0x1: 'SET',
+    0x2: 'ADD',
+    0x3: 'SUB',
+    0x4: 'MUL',
+    0x5: 'DIV',
+    0x6: 'MOD',
+    0x7: 'SHL',
+    0x8: 'SHR',
+    0x9: 'AND',
+    0xa: 'BOR',
+    0xb: 'XOR',
+    0xc: 'IFE',
+    0xd: 'IFN',
+    0xe: 'IFG',
+    0xf: 'IFB',
+}

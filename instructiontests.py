@@ -174,7 +174,7 @@ class TestInstructions(unittest.TestCase):
         cpu.ram[0] = pack_instruction(op_code=0xc, oper1=0x0, oper2=0x1)
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 2, "PC not set right")
+        self.assertEqual(cpu.skip_instruction, True, "Skip error")
 
     def test_ifn_false(self):
         cpu = CPU()
@@ -184,7 +184,7 @@ class TestInstructions(unittest.TestCase):
         cpu.ram[0] = pack_instruction(op_code=0xd, oper1=0x0, oper2=0x1)
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 2, "PC not set right")
+        self.assertEqual(cpu.skip_instruction, True, "Skip error")
 
     def test_ifn_true(self):
         cpu = CPU()
@@ -194,7 +194,7 @@ class TestInstructions(unittest.TestCase):
         cpu.ram[0] = pack_instruction(op_code=0xd, oper1=0x0, oper2=0x1)
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 1, "PC not set right")
+        self.assertEqual(cpu.skip_instruction, False, "Skip error")
 
     def test_ifg_false(self):
         cpu = CPU()
@@ -204,7 +204,7 @@ class TestInstructions(unittest.TestCase):
         cpu.ram[0] = pack_instruction(op_code=0xe, oper1=0x0, oper2=0x1)
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 2, "PC not set right")
+        self.assertEqual(cpu.skip_instruction, True, "Skip error")
 
     def test_ifg_true(self):
         cpu = CPU()
@@ -224,7 +224,7 @@ class TestInstructions(unittest.TestCase):
         cpu.ram[0] = pack_instruction(op_code=0xf, oper1=0x0, oper2=0x1)
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 1, "PC not set right")
+        self.assertEqual(cpu.skip_instruction, False, "Skip error")
 
     def test_ifb_notequal(self):
         cpu = CPU()
@@ -234,9 +234,19 @@ class TestInstructions(unittest.TestCase):
         cpu.ram[0] = pack_instruction(op_code=0xf, oper1=0x0, oper2=0x1)
         cpu.dispatch()
 
-        self.assertTrue(cpu.PC == 2, "PC not set right")
+        self.assertEqual(cpu.skip_instruction, True, "Skip error")
+
+    def test_jsr(self):
+        cpu = CPU()
+        cpu.registers[REG.I] = 0x2323 # PC should be set to this
+
+        # JSR D
+        cpu.ram[0] = (0b1 << 4) | (REG.I << 10)
+        cpu.dispatch()
+        
+        self.assertEqual(cpu.PC, 0x2323, "PC not right")
+        self.assertEqual(cpu.ram[cpu.SP], 0x1, "Stack not right")
 
 if __name__ == '__main__':
     unittest.main()
-
 

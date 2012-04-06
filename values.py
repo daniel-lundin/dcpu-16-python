@@ -3,7 +3,7 @@ from constants import REG
 class Value(object):
     def eval(self, cpu):
         """ Called once before any call to get/set """
-        pass
+        return self
 
 class RegisterValue(Value):
 
@@ -40,6 +40,7 @@ class RegisterRamNextWordOffset(Value):
     def eval(self, cpu):
         self._PC = cpu.PC # Save pc at time of eval
         cpu.PC += 1
+        return self
 
 class RamOfNextWord(Value):
     def get(self, cpu):
@@ -51,6 +52,7 @@ class RamOfNextWord(Value):
     def eval(self, cpu):
         self._PC = cpu.PC
         cpu.PC += 1
+        return self
 
 class NextWordLiteral(Value):
     def get(self, cpu):
@@ -62,6 +64,7 @@ class NextWordLiteral(Value):
     def eval(self, cpu):
         self._PC = cpu.PC
         cpu.PC += 1
+        return self
 
     
 class Literal(Value):
@@ -80,6 +83,8 @@ class Literal(Value):
 class StackPop(Value):
     def get(self, cpu):
         val = cpu.ram[cpu.SP]
+        if cpu.SP >= len(cpu.ram):
+            cpu.halt('Stack underflow')
         cpu.SP += 1
         return val
 
@@ -93,6 +98,8 @@ class StackPush(Value):
 
     def set(self, cpu, value):
         cpu.SP -= 1
+        if cpu.SP < 0:
+            cpu.halt('Stack overflow')
         cpu.ram[cpu.SP] = value
 
 class StackPeek(Value):
@@ -104,14 +111,14 @@ class StackPeek(Value):
 
 class SPValue(Value):
     def get(self, cpu):
-        return CPU.SP
+        return cpu.SP
 
     def set(self, cpu, value):
         cpu.SP = value
 
 class PCValue(Value):
     def get(self, cpu):
-        return CPU.PC
+        return cpu.PC
 
     def set(self, cpu, value):
         cpu.PC = value

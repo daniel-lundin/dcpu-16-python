@@ -2,7 +2,7 @@
 """ Implementation of DCPU-16 """
 import sys
 from values import create_value_dict
-from constants import REG, OPCODE
+from constants import REG, OPCODE, opcode_to_instruction
 
 class CPU(object):
     def __init__(self):
@@ -39,29 +39,33 @@ class CPU(object):
         }
 
         self.VALUES = create_value_dict()
+        self.skip_instruction = False
 
 
     def execute(self, start):
         self.PC = start
-        PEACE_ON_EARTH = False
-        while not PEACE_ON_EARTH:
+        #PEACE_ON_EARTH = False
+        #while not PEACE_ON_EARTH:
+        for i in range(200):
             self.dispatch()
+        self.halt('Instruction limit')
 
     def dispatch(self):
         """ Execute instruction at [PC] """
         instruction = self.ram[self.PC]
         self.PC += 1
         op_code = instruction & 0xf
-        oper1 = (instruction & 0x3f0) >> 4
-        oper2 = (instruction & 0xfd00) >> 10
         if op_code == 0x00:
-            print "Only basic instructions supported"
-            exit(1)
-        a = self.VALUES[oper1]
-        b = self.VALUES[oper2]
-        a.eval(self)
-        b.eval(self)
-        self.BASIC_INSTRUCTIONS[op_code](a, b)
+            self.non_basic(instruction)
+        else:
+            oper1 = (instruction & 0x3f0) >> 4
+            oper2 = (instruction & 0xfd00) >> 10
+            a = self.VALUES[oper1].eval(self)
+            b = self.VALUES[oper2].eval(self)
+            if not self.skip_instruction:
+                self.BASIC_INSTRUCTIONS[op_code](a, b)
+            else:
+                self.skip_instruction = False
 
     def SET(self, a, b):
         a.set(self, b.get(self))
@@ -116,30 +120,80 @@ class CPU(object):
 
     def IFE(self, a, b):
         if a.get(self) != b.get(self):
-            self.PC += 1
+            self.skip_instruction = True
 
     def IFN(self, a, b):
-        if a.get(self) == b.get(self):
-            self.PC += 1
+        self.skip_instruction = not (a.get(self) != b.get(self))
 
     def IFG(self, a, b):
         if a.get(self) <= b.get(self):
-            self.PC += 1
+            self.skip_instruction = True
 
     def IFB(self, a, b):
         if not (a.get(self) & b.get(self)) != 0:
-            self.PC += 1
+            self.skip_instruction = True
+
+    def non_basic(self, instruction):
+        opcode = (instruction >> 4) & 0b111111
+        if(opcode != 0x01):
+            return
+        oper1 = (instruction >> 10)
+        a = self.VALUES[oper1].eval(self)
+        if self.skip_instruction:
+            self.skip_instruction = False
+            return
+        # Push next address to the stack
+        if self.SP < 0:
+            self.halt('Stack overflow')
+        self.SP -= 1
+        self.ram[self.SP] = self.PC
+        self.PC = a.get(self)
+
+    def halt(self, msg):
+        print "**** HALT *****"
+        print "what: ", msg
+        self.dump_registers()
+        exit(2)
+
+    def dump_registers(self):
+        print "REGISTERS:"
+        print ", ".join(["%d: %d" % (k, self.registers[k]) for k in self.registers.iterkeys()])
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print 'Usage: cpu program'
-        exit(0)
+    # Test program
     cpu = CPU()
-    import ipdb
-    ipdb.set_trace()
-    f = open(sys.argv[1], 'r+b')
-    all_data = f.read()
-    for idx, byte in zip(range(len(all_data)), all_data):
-        cpu.ram[idx] = byte
-
-    cpu.dispatch()
+    cpu.ram[0] = 0x7c01
+    cpu.ram[1] = 0x0030
+    cpu.ram[2] = 0x7de1
+    cpu.ram[3] = 0x1000
+    cpu.ram[4] = 0x0020
+    cpu.ram[5] = 0x7803
+    cpu.ram[6] = 0x1000
+    cpu.ram[7] = 0xc00d
+    cpu.ram[8] = 0x7dc1
+    cpu.ram[9] = 0x001a
+    cpu.ram[10] = 0xa861
+    cpu.ram[11] = 0x7c01
+    cpu.ram[12] = 0x2000
+    cpu.ram[13] = 0x2161
+    cpu.ram[14] = 0x2000
+    cpu.ram[15] = 0x8463
+    cpu.ram[16] = 0x806d
+    cpu.ram[17] = 0x7dc1
+    cpu.ram[18] = 0x000d
+    cpu.ram[19] = 0x9031
+    cpu.ram[20] = 0x7c10
+    cpu.ram[21] = 0x0018
+    cpu.ram[22] = 0x7dc1
+    cpu.ram[23] = 0x001a
+    cpu.ram[24] = 0x9037
+    cpu.ram[25] = 0x61c1
+    cpu.ram[26] = 0x7dc1
+    cpu.ram[27] = 0x001a
+    cpu.ram[28] = 0x0000
+    cpu.ram[29] = 0x0000
+    cpu.ram[30] = 0x0000
+    cpu.ram[31] = 0000
+    cpu.execute(0)
+    cpu.dump_registers()
+    print "PC:", format(cpu.PC, 'x')
