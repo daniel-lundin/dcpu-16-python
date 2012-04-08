@@ -1,8 +1,10 @@
 #! /usr/bin/python
 """ Implementation of DCPU-16 """
 import sys
+import optparse
+import struct
 from values import create_value_dict
-from constants import REG, OPCODE, opcode_to_instruction
+from constants import REG, OPCODE, opcode_to_instruction, regidx_to_name
 
 class CPU(object):
     def __init__(self):
@@ -42,13 +44,16 @@ class CPU(object):
         self.skip_instruction = False
 
 
-    def execute(self, start):
+    def execute(self, start, limit=None):
         self.PC = start
-        #PEACE_ON_EARTH = False
-        #while not PEACE_ON_EARTH:
-        for i in range(200):
-            self.dispatch()
-        self.halt('Instruction limit')
+        if limit:
+            for i in range(limit):
+                self.dispatch()
+            self.halt('Instruction limit reached')
+        else:
+            PEACE_ON_EARTH = False
+            while not PEACE_ON_EARTH:
+                self.dispatch()
 
     def dispatch(self):
         """ Execute instruction at [PC] """
@@ -157,43 +162,28 @@ class CPU(object):
 
     def dump_registers(self):
         print "REGISTERS:"
-        print ", ".join(["%d: %d" % (k, self.registers[k]) for k in self.registers.iterkeys()])
+        print ", ".join(["%s: %d" % (regidx_to_name[k], self.registers[k]) for k in self.registers.iterkeys()])
 
 if __name__ == '__main__':
-    # Test program
+    optparser = optparse.OptionParser()
+    optparser.add_option('-f', '--file', dest="file", help="Program file")
+    optparser.add_option('-l', '--limit', dest="limit", help="Max number of instructions to execute")
+    (options, args) = optparser.parse_args(sys.argv)
+    
+    if not options.file:
+        optparser.print_help()
+        exit(1)
+
     cpu = CPU()
-    cpu.ram[0] = 0x7c01
-    cpu.ram[1] = 0x0030
-    cpu.ram[2] = 0x7de1
-    cpu.ram[3] = 0x1000
-    cpu.ram[4] = 0x0020
-    cpu.ram[5] = 0x7803
-    cpu.ram[6] = 0x1000
-    cpu.ram[7] = 0xc00d
-    cpu.ram[8] = 0x7dc1
-    cpu.ram[9] = 0x001a
-    cpu.ram[10] = 0xa861
-    cpu.ram[11] = 0x7c01
-    cpu.ram[12] = 0x2000
-    cpu.ram[13] = 0x2161
-    cpu.ram[14] = 0x2000
-    cpu.ram[15] = 0x8463
-    cpu.ram[16] = 0x806d
-    cpu.ram[17] = 0x7dc1
-    cpu.ram[18] = 0x000d
-    cpu.ram[19] = 0x9031
-    cpu.ram[20] = 0x7c10
-    cpu.ram[21] = 0x0018
-    cpu.ram[22] = 0x7dc1
-    cpu.ram[23] = 0x001a
-    cpu.ram[24] = 0x9037
-    cpu.ram[25] = 0x61c1
-    cpu.ram[26] = 0x7dc1
-    cpu.ram[27] = 0x001a
-    cpu.ram[28] = 0x0000
-    cpu.ram[29] = 0x0000
-    cpu.ram[30] = 0x0000
-    cpu.ram[31] = 0000
-    cpu.execute(0)
-    cpu.dump_registers()
-    print "PC:", format(cpu.PC, 'x')
+    limit = None
+    if options.limit:
+        limit = int(options.limit, 0) # Guess base
+    f = open(options.file)
+    data = f.read()
+    words = struct.unpack('>%dH' % (len(data)/2), data)
+    for word, idx in zip(words, range(len(words))):
+        cpu.ram[idx] = word
+        
+
+    cpu.execute(0, limit)
+

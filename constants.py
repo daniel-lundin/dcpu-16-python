@@ -46,3 +46,13 @@ opcode_to_instruction = {
     0xe: 'IFG',
     0xf: 'IFB',
 }
+regidx_to_name = {
+    0x0: 'A',
+    0x1: 'B',
+    0x2: 'C',
+    0x3: 'X',
+    0x4: 'Y',
+    0x5: 'Z',
+    0x6: 'I',
+    0x7: 'J',
+}
