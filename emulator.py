@@ -1,5 +1,6 @@
-from values import create_value_dict
+from values import value_lookup
 from constants import OPCODE
+from utils import unpack_instruction
 
 
 class Emulator(object):
@@ -24,7 +25,6 @@ class Emulator(object):
             OPCODE.IFB: self.IFB,
         }
 
-        self.VALUES = create_value_dict()
 
     def execute(self, start, limit=None):
         self.cpu.PC = start
@@ -39,84 +39,82 @@ class Emulator(object):
 
     def dispatch(self):
         """ Execute instruction at [PC] """
-        instruction = self.cpu.ram[self.cpu.PC]
-        self.cpu.PC += 1
-        op_code = instruction & 0xf
+        instruction = self.cpu.ram[self.cpu.PC.value].value
+        self.cpu.PC.value = self.cpu.PC.value + 1
+        op_code, b, a = unpack_instruction(instruction)
         if op_code == 0x00:
             self.non_basic(instruction)
         else:
-            oper1 = (instruction & 0x3f0) >> 4
-            oper2 = (instruction & 0xfd00) >> 10
-            a = self.VALUES[oper1].eval(self.cpu)
-            b = self.VALUES[oper2].eval(self.cpu)
+            b = value_lookup(self.cpu, b, as_a=False)
+            a = value_lookup(self.cpu, a, as_a=True)
             if not self.cpu.skip_instruction:
-                self.BASIC_INSTRUCTIONS[op_code](a, b)
+                self.BASIC_INSTRUCTIONS[op_code](b, a)
             else:
                 self.cpu.skip_instruction = False
 
-    def SET(self, a, b):
-        a.set(self.cpu, b.get(self.cpu))
+    def SET(self, b, a):
+        b.value = a.value
 
-    def ADD(self, a, b):
-        sum = a.get(self.cpu) + b.get(self.cpu)
-        self.cpu.O = 0xffff if sum > 0xffff else 0
+    def ADD(self, b, a):
+        sum = a.value + b.value
+        self.cpu.EX.value = 0xffff if sum > 0xffff else 0
         sum = sum & 0xffff
-        a.set(self.cpu, sum)
+        b.value = sum
 
-    def SUB(self, a, b):
-        res = a.get(self.cpu) - b.get(self.cpu)
-        self.cpu.O = 0x0
+    def SUB(self, b, a):
+        res = b.value - a.value
+        self.cpu.EX.value = 0x0
         if res < 0:
-            self.cpu.O = 0xffff
+            self.cpu.EX.value = 0xffff
             res = -1 * res
-        a.set(self.cpu, res)
+        b.value = res
 
-    def MUL(self, a, b):
-        res = a.get(self.cpu) * b.get(self.cpu)
-        self.cpu.O = (res >> 16) & 0xffff
+    def MUL(self, b, a):
+        res = b.value * a.value
+        self.cpu.EX.value = ((res >> 16) & 0xffff)
         res = res & 0xffff
-        a.set(self.cpu, res)
+        b.value = res
 
-    def DIV(self, a, b):
-        if b.get(self.cpu) == 0:
-            a.set(self.cpu, 0)
-        aval = a.get(self.cpu)
-        a.set(self.cpu, aval / b.get(self.cpu))
-        self.cpu.O == ((aval << 16) / b.get(self.cpu)) & 0xffff
+    def DIV(self, b, a):
+        if a.value == 0:
+            b.value = 0
+        bval = b.value
+        b.value = bval / a.value
+        self.cpu.EX.value = ((bval << 16) / a.value) & 0xffff
 
-    def MOD(self, a, b):
-        a.set(self.cpu, a.get(self.cpu) % b.get(self.cpu))
+    def MOD(self, b, a):
+        b.value = b.value % a.value
 
-    def SHL(self, a, b):
-        a.set(self.cpu, a.get(self.cpu) << b.get(self.cpu))
-        self.cpu.O = (a.get(self.cpu) << b.get(self.cpu) >> 16) & 0xfff
+    def SHL(self, b, a):
+        b.value = b.value << a.value
+        self.cpu.EX.vale = (b.value << a.value >> 16) & 0xfff
 
-    def SHR(self, a, b):
-        a.set(self.cpu, a.get(self.cpu) >> b.get(self.cpu))
-        self.cpu.O = (a.get(self.cpu) << 16) >> b.get(self.cpu) & 0xfff
+    def SHR(self, b, a):
+        b.value = b.value >> a.value
+        self.cpu.EX.value = (b.value << 16) >> a.value & 0xfff
 
-    def AND(self, a, b):
-        a.set(self.cpu, a.get(self.cpu) & b.get(self.cpu))
+    def AND(self, b, a):
+        b.value = b.value & a.value
 
-    def BOR(self, a, b):
-        a.set(self.cpu, a.get(self.cpu) | b.get(self.cpu))
+    def BOR(self, b, a):
+        b.value = b.value | a.value
 
-    def XOR(self, a, b):
-        a.set(self.cpu, a.get(self.cpu) ^ b.get(self.cpu))
+    def XOR(self, b, a):
+        b.value = b.value ^ a.value
 
-    def IFE(self, a, b):
-        if a.get(self.cpu) != b.get(self.cpu):
+    def IFE(self, b, a):
+        if a.value != b.value:
             self.cpu.skip_instruction = True
 
-    def IFN(self, a, b):
-        self.cpu.skip_instruction = not (a.get(self.cpu) != b.get(self.cpu))
+    def IFN(self, b, a):
+        self.cpu.skip_instruction = not (a.value != b.value)
 
-    def IFG(self, a, b):
-        if a.get(self.cpu) <= b.get(self.cpu):
+    def IFG(self, b, a):
+        if b.value > a.value:
             self.cpu.skip_instruction = True
 
-    def IFB(self, a, b):
-        if not (a.get(self.cpu) & b.get(self.cpu)) != 0:
+    def IFB(self, b, a):
+        if not (a.value & b.value) != 0:
             self.cpu.skip_instruction = True
 
     def non_basic(self, instruction):
@@ -124,16 +122,16 @@ class Emulator(object):
         if(opcode != 0x01):
             return
         oper1 = (instruction >> 10)
-        a = self.VALUES[oper1].eval(self.cpu)
+        a = value_lookup(self.cpu, oper1, as_a=True)
         if self.cpu.skip_instruction:
             self.cpu.skip_instruction = False
             return
         # Push next address to the stack
-        if self.cpu.SP < 0:
+        if self.cpu.SP.value < 0:
             self.halt('Stack overflow')
-        self.cpu.SP -= 1
-        self.cpu.ram[self.cpu.SP] = self.cpu.PC
-        self.cpu.PC = a.get(self.cpu)
+        self.cpu.SP.value -= 1
+        self.cpu.ram[self.cpu.SP.value].value = self.cpu.PC.value
+        self.cpu.PC.value = a.value
 
     def halt(self, msg):
         print "**** HALT *****"
