@@ -4,7 +4,7 @@ import unittest
 from cpu import CPU
 from emulator import Emulator
 from constants import REG, OPCODE
-from utils import pack_instruction
+from utils import pack_instruction, Value
 
 class TestInstructions(unittest.TestCase):
 
@@ -17,7 +17,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x12
         self.cpu.registers[REG.B].value = 0x34
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x2, oper1=0x0, oper2=0x1)
+        # ADD A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.ADD,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x46, "Add failed")
@@ -28,7 +31,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0xffff
         self.cpu.registers[REG.B].value = 0x0001
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x2, oper1=0x0, oper2=0x1)
+        # ADD A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.ADD,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x0000, "Add failed")
@@ -39,7 +45,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0xffff
         self.cpu.registers[REG.B].value = 0x0001
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x3, oper1=0x0, oper2=0x1)
+        # SUB A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SUB,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xfffe, "Sub failed")
@@ -50,7 +59,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x0001
         self.cpu.registers[REG.B].value = 0x0002
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x3, oper1=0x0, oper2=0x1)
+        # SUB A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SUB,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x0001, "Sub failed")
@@ -61,7 +73,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x0002
         self.cpu.registers[REG.B].value = 0x0003
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x4, oper1=0x0, oper2=0x1)
+        # MUL A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.MUL,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x6, "Mul failed")
@@ -72,7 +87,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0xffff
         self.cpu.registers[REG.B].value = 0x0002
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x4, oper1=0x0, oper2=0x1)
+        # MUL A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.MUL,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xfffe, "Mul failed")
@@ -83,7 +101,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x0009
         self.cpu.registers[REG.B].value = 0x0002
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x5, oper1=0x0, oper2=0x1)
+        # DIV A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.DIV,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x4, "Div failed")
@@ -93,7 +114,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x0009
         self.cpu.registers[REG.B].value = 0x0002
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x6, oper1=0x0, oper2=0x1)
+        # MOD A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.MOD,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x1, "Mod failed")
@@ -103,7 +127,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x0008
         self.cpu.registers[REG.B].value = 0x0002
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x7, oper1=0x0, oper2=0x1)
+        # SHL A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SHL,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x20, "shl failed")
@@ -113,7 +140,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x0008
         self.cpu.registers[REG.B].value = 0x0002
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x8, oper1=0x0, oper2=0x1)
+        # SHR A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SHR,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x2, "shr failed")
@@ -123,7 +153,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x000f
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0x9, oper1=0x0, oper2=0x1)
+        # AND A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.AND,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xf, "and failed")
@@ -133,7 +166,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x000f
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xa, oper1=0x0, oper2=0x1)
+        # BOR A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.BOR,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xff, "bor failed")
@@ -143,8 +179,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x000f
 
-        # XOR REG_A, REG_B
-        self.cpu.ram[0].value = pack_instruction(op_code=0xb, oper1=0x0, oper2=0x1)
+        # XOR A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.XOR,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xf0, "xor failed")
@@ -153,7 +191,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ff
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xc, oper1=0x0, oper2=0x1)
+        # IFE A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFE,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.PC.value == 1, "PC not set right")
@@ -162,7 +203,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ef
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xc, oper1=0x0, oper2=0x1)
+        # IFE A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFE,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, True, "Skip error")
@@ -171,7 +215,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ff
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xd, oper1=0x0, oper2=0x1)
+        # IFN A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFN,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, True, "Skip error")
@@ -180,7 +227,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ef
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xd, oper1=0x0, oper2=0x1)
+        # IFN A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFN,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, False, "Skip error")
@@ -189,7 +239,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00fe
         self.cpu.registers[REG.B].value = 0x00ff
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xe, oper1=0x1, oper2=0x0)
+        # IFG A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFG,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, True, "Skip error")
@@ -198,16 +251,22 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ef
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xe, oper1=0x0, oper2=0x1)
+        # IFG A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFG,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
-        self.assertTrue(self.cpu.PC.value == 1, "PC not set right")
+        self.assertEqual(self.cpu.skip_instruction, False, "Skip error")
 
     def test_ifb_true(self):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ff
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xf, oper1=0x0, oper2=0x1)
+        # IFB A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFB,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, False, "Skip error")
@@ -216,7 +275,10 @@ class TestInstructions(unittest.TestCase):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x0000
 
-        self.cpu.ram[0].value = pack_instruction(op_code=0xf, oper1=0x0, oper2=0x1)
+        # IFB A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFB,
+                                                 oper1=Value.reg(REG.A),
+                                                 oper2=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, True, "Skip error")
@@ -227,7 +289,7 @@ class TestInstructions(unittest.TestCase):
         # JSR D
         self.cpu.ram[0].value = (0b1 << 4) | (REG.I << 10)
         self.emulator.dispatch()
-        
+
         self.assertEqual(self.cpu.PC.value, 0x2323, "PC not right")
         self.assertEqual(self.cpu.ram[self.cpu.SP.value].value, 0x1, "Stack not right")
 

@@ -10,7 +10,7 @@ class REG(object):
 
     SP = 0x1b
     PC = 0x1c
-    O  = 0x1d
+    EX  = 0x1d
 
 class OPCODE(object):
     SET = 0x1 

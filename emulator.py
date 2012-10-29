@@ -110,7 +110,7 @@ class Emulator(object):
         self.cpu.skip_instruction = not (a.value != b.value)
 
     def IFG(self, b, a):
-        if b.value > a.value:
+        if b.value <= a.value:
             self.cpu.skip_instruction = True
 
     def IFB(self, b, a):
