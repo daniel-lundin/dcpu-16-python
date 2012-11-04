@@ -1,10 +1,27 @@
 
-def pack_instruction(op_code, oper1, oper2):
-    return op_code | (oper1 << 4) | (oper2 << 10)
+def pack_instruction(op_code, a, b):
+    return op_code | (a << 5) | (b << 10)
+
+def pack_special_instruction(op_code, a):
+    return (op_code << 5) | (a << 10)
 
 def unpack_instruction(instruction):
-    """ Returns tuple (opcode, oper1, oper2) """
-    return (instruction & 0xf, (instruction & 0x3f0) >> 4, (instruction & 0xfd00) >> 10)
+    """ Returns tuple (opcode, b, a) """
+    return (instruction & 0x1f, (instruction & 0x3e0) >> 5, (instruction & 0xfd00) >> 10)
+
+def unpack_special_instruction(instruction):
+    return ((instruction & 0x03e0) >> 5, (instruction & 0xfd00) >> 10)
+
+# Hint for constructing instructions
+#  aaaa aabb bbbo oooo
+#a 1111 1100 0000 0000 0xfd00
+#b 0000 0011 1110 0000 0x03e0
+#9 0000 0000 0001 1111 0x1f
+
+# Hint for constructing special instructions
+#  aaaa aaoo ooo0 0000
+#a 1111 1100 0000 0000 0xfd00
+#b 0000 0011 1110 0000 0x03e0
 
 
 class Value(object):

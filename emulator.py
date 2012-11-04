@@ -1,6 +1,6 @@
 from values import value_lookup
 from constants import OPCODE
-from utils import unpack_instruction
+from utils import unpack_instruction, unpack_special_instruction
 
 
 class Emulator(object):
@@ -12,6 +12,7 @@ class Emulator(object):
             OPCODE.ADD: self.ADD,
             OPCODE.SUB: self.SUB,
             OPCODE.MUL: self.MUL,
+            OPCODE.MLI: self.MLI,
             OPCODE.DIV: self.DIV,
             OPCODE.MOD: self.MOD,
             OPCODE.SHL: self.SHL,
@@ -41,12 +42,12 @@ class Emulator(object):
         """ Execute instruction at [PC] """
         instruction = self.cpu.ram[self.cpu.PC.value].value
         self.cpu.PC.value = self.cpu.PC.value + 1
-        op_code, b, a = unpack_instruction(instruction)
+        op_code, b_val, a_val = unpack_instruction(instruction)
         if op_code == 0x00:
             self.non_basic(instruction)
         else:
-            b = value_lookup(self.cpu, b, as_a=False)
-            a = value_lookup(self.cpu, a, as_a=True)
+            b = value_lookup(self.cpu, b_val, as_a=False)
+            a = value_lookup(self.cpu, a_val, as_a=True)
             if not self.cpu.skip_instruction:
                 self.BASIC_INSTRUCTIONS[op_code](b, a)
             else:
@@ -70,6 +71,12 @@ class Emulator(object):
         b.value = res
 
     def MUL(self, b, a):
+        res = b.value * a.value
+        self.cpu.EX.value = ((res >> 16) & 0xffff)
+        res = res & 0xffff
+        b.value = res
+
+    def MLI(self, b, a):
         res = b.value * a.value
         self.cpu.EX.value = ((res >> 16) & 0xffff)
         res = res & 0xffff
@@ -118,11 +125,10 @@ class Emulator(object):
             self.cpu.skip_instruction = True
 
     def non_basic(self, instruction):
-        opcode = (instruction >> 4) & 0b111111
-        if(opcode != 0x01):
+        opcode, a_val = unpack_special_instruction(instruction)
+        if(opcode != OPCODE.JSR):
             return
-        oper1 = (instruction >> 10)
-        a = value_lookup(self.cpu, oper1, as_a=True)
+        a = value_lookup(self.cpu, a_val, as_a=True)
         if self.cpu.skip_instruction:
             self.cpu.skip_instruction = False
             return

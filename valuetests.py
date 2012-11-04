@@ -16,8 +16,8 @@ class TestValues(unittest.TestCase):
         """ Sets a register to a literal """
         # SET A, 0x10
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.A),
-                                                 oper2=Value.literal(0x10))
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.literal(0x10))
         self.emulator.dispatch()
         self.assertTrue(self.cpu.registers[REG.A].value == 0x10, "Register value error")
 
@@ -29,8 +29,8 @@ class TestValues(unittest.TestCase):
 
         # SET [I] B
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.addr_reg(REG.I),
-                                                 oper2=Value.reg(REG.B))
+                                                 a=Value.addr_reg(REG.I),
+                                                 b=Value.reg(REG.B))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.ram[0xff].value == 0x11, "Ram not updated correctly")
@@ -41,8 +41,8 @@ class TestValues(unittest.TestCase):
 
         # SET A POP
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.A),
-                                                 oper2=Value.push_pop())
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.push_pop())
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xdead, "Stack popping b0rked")
@@ -53,8 +53,8 @@ class TestValues(unittest.TestCase):
 
         # SET PUSH, A
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.push_pop(),
-                                                 oper2=Value.reg(REG.A))
+                                                 a=Value.push_pop(),
+                                                 b=Value.reg(REG.A))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.ram[self.cpu.SP.value].value == 0xdead, "Stack pushing b0rked")
@@ -65,8 +65,8 @@ class TestValues(unittest.TestCase):
 
         # SET A, PEEK
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.A),
-                                                 oper2=Value.peek())
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.peek())
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0xbeef, "Stack peeking b0rked")
@@ -76,8 +76,8 @@ class TestValues(unittest.TestCase):
 
         # SET SP, 0x02
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.sp(),
-                                                 oper2=Value.literal(0x02))
+                                                 a=Value.sp(),
+                                                 b=Value.literal(0x02))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.SP.value == 0x2, "SP Loading failed")
@@ -86,8 +86,8 @@ class TestValues(unittest.TestCase):
         """ Sets PC """
 
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.pc(),
-                                                 oper2=Value.literal(0x5))
+                                                 a=Value.pc(),
+                                                 b=Value.literal(0x5))
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.PC.value, 0x5, "PC Loading failed")
@@ -98,8 +98,8 @@ class TestValues(unittest.TestCase):
 
         # SET A, EX
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.A),
-                                                 oper2=Value.reg(REG.EX))
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.EX))
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.EX.value == 0xffff, "O Loading failed")
@@ -111,8 +111,8 @@ class TestValues(unittest.TestCase):
 
         # SET C, [B + next word]
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.C),
-                                                 oper2=Value.addr_reg_next_word(REG.B))
+                                                 a=Value.reg(REG.C),
+                                                 b=Value.addr_reg_next_word(REG.B))
         self.cpu.ram[1].value = 0x10
         self.emulator.dispatch()
 
@@ -126,8 +126,8 @@ class TestValues(unittest.TestCase):
 
         # SET [0x0010 + B], [0x0020 + C]
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.addr_reg_next_word(REG.B),
-                                                 oper2=Value.addr_reg_next_word(REG.C))
+                                                 a=Value.addr_reg_next_word(REG.B),
+                                                 b=Value.addr_reg_next_word(REG.C))
         self.cpu.ram[1].value = 0x10
         self.cpu.ram[2].value = 0x20
         self.emulator.dispatch()
@@ -141,8 +141,8 @@ class TestValues(unittest.TestCase):
 
         # SET X [next word]
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.X),
-                                                 oper2=Value.next_word_addr())
+                                                 a=Value.reg(REG.X),
+                                                 b=Value.next_word_addr())
         self.cpu.ram[1].value = 0x44
         self.emulator.dispatch()
 
@@ -153,8 +153,8 @@ class TestValues(unittest.TestCase):
 
         # SET A 0x1f
         self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SET,
-                                                 oper1=Value.reg(REG.A),
-                                                 oper2=Value.next_word_literal())
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.next_word_literal())
         self.cpu.ram[1].value = 0x1234
 
         self.emulator.dispatch()
