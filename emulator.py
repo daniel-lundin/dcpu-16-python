@@ -1,6 +1,6 @@
 from ctypes import c_int16, c_uint16
 from values import value_lookup
-from constants import OPCODE
+from constants import OPCODE, REG
 from utils import unpack_instruction, unpack_special_instruction
 
 
@@ -24,6 +24,7 @@ class Emulator(object):
             OPCODE.SHR: self.SHR,
             OPCODE.ASR: self.ASR,
             OPCODE.SHL: self.SHL,
+
             OPCODE.IFB: self.IFB,
             OPCODE.IFC: self.IFC,
             OPCODE.IFE: self.IFE,
@@ -32,6 +33,12 @@ class Emulator(object):
             OPCODE.IFA: self.IFA,
             OPCODE.IFL: self.IFL,
             OPCODE.IFU: self.IFU,
+
+            OPCODE.ADX: self.ADX,
+            OPCODE.SBX: self.SBX,
+
+            OPCODE.STI: self.STI,
+            OPCODE.STD: self.STD,
         }
 
 
@@ -168,6 +175,26 @@ class Emulator(object):
     def IFU(self, b, a):
         if c_int16(b.value).value >= c_int16(a.value).value:
             self.cpu.skip_instruction = True
+
+    def ADX(self, b, a):
+        res = b.value + a.value + self.cpu.EX.value
+        b.value = res
+        self.cpu.EX.value = (1 if res >= 0xffff else 0)
+
+    def SBX(self, b, a):
+        res = b.value - a.value + self.cpu.EX.value
+        b.value = res
+        self.cpu.EX.value = (1 if res <= 0 else 0)
+
+    def STI(self, b, a):
+        b.value += a.value
+        self.cpu.registers[REG.I].value += 1
+        self.cpu.registers[REG.J].value += 1
+
+    def STD(self, b, a):
+        b.value += a.value
+        self.cpu.registers[REG.I].value -= 1
+        self.cpu.registers[REG.J].value -= 1
 
     def non_basic(self, instruction):
         opcode, a_val = unpack_special_instruction(instruction)

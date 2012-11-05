@@ -391,6 +391,64 @@ class TestInstructions(unittest.TestCase):
 
         self.assertEqual(self.cpu.skip_instruction, True, "IFU failed")
 
+    def test_adx(self):
+        self.cpu.registers[REG.A].value = 0xfffe
+        self.cpu.registers[REG.B].value = 0x0002
+        self.cpu.EX.value = 0
+
+        # ADX A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.ADX,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.EX.value, 1, "ADX failed")
+
+    def test_sbx(self):
+        self.cpu.registers[REG.A].value = 0x0003
+        self.cpu.registers[REG.B].value = 0x0008
+        self.cpu.EX.value = 0
+
+        # SBX A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.SBX,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.EX.value, 1, "SBX failed")
+
+    def test_sti(self):
+        self.cpu.registers[REG.A].value = 0x0003
+        self.cpu.registers[REG.B].value = 0x0008
+        self.cpu.registers[REG.I].value = 0x000a
+        self.cpu.registers[REG.J].value = 0x000b
+
+        # STI A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.STI,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.registers[REG.A].value, 0xb, "STI fail")
+        self.assertEqual(self.cpu.registers[REG.I].value, 0xb, "STI fail")
+        self.assertEqual(self.cpu.registers[REG.J].value, 0xc, "STI fail")
+
+    def test_std(self):
+        self.cpu.registers[REG.A].value = 0x0003
+        self.cpu.registers[REG.B].value = 0x0008
+        self.cpu.registers[REG.I].value = 0x000a
+        self.cpu.registers[REG.J].value = 0x000b
+
+        # STD A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.STD,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.registers[REG.A].value, 0xb, "STD fail")
+        self.assertEqual(self.cpu.registers[REG.I].value, 0x9, "STD fail")
+        self.assertEqual(self.cpu.registers[REG.J].value, 0xa, "STD fail")
+
     def test_jsr(self):
         self.cpu.registers[REG.I].value = 0x2323 # PC should be set to this
 
