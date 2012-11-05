@@ -1,31 +1,32 @@
+from ctypes import c_uint16
 from constants import REG, regidx_to_name
 
 
-# Do operating overload to get rid of get/set?
 class MemoryCell(object):
+    """ For debugging, keeps track of where the cell is """
     def __init__(self, value, hint=''):
-        self.value = value
+        self.value = c_uint16(value)
         self.hint = hint
 
     def __repr__(self):
         return '<%s> %d' % (self.hint, self.value)
 
 class CPU(object):
-    def __init__(self):
+    def __init__(self, memory_type=c_uint16):
         self.registers = {
-            REG.A: MemoryCell(0, 'REG A'),
-            REG.B: MemoryCell(0, 'REG B'),
-            REG.C: MemoryCell(0, 'REG C'),
-            REG.X: MemoryCell(0, 'REG X'),
-            REG.Y: MemoryCell(0, 'REG Y'),
-            REG.Z: MemoryCell(0, 'REG Z'),
-            REG.I: MemoryCell(0, 'REG I'),
-            REG.J: MemoryCell(0, 'REG J')
+            REG.A: memory_type(0),
+            REG.B: memory_type(0),
+            REG.C: memory_type(0),
+            REG.X: memory_type(0),
+            REG.Y: memory_type(0),
+            REG.Z: memory_type(0),
+            REG.I: memory_type(0),
+            REG.J: memory_type(0)
         }
-        self.ram = [MemoryCell(0, 'MEM %d' % x) for x in range(0x10000)]
-        self.SP = MemoryCell(0xffff, 'SP')
-        self.PC = MemoryCell(0, 'PC')
-        self.EX = MemoryCell(0, 'EX')
+        self.ram = [memory_type(0) for x in range(0x10000)]
+        self.SP = memory_type(0xffff)
+        self.PC = memory_type(0)
+        self.EX = memory_type(0)
         self.skip_instruction = False
 
     def dump_registers(self):

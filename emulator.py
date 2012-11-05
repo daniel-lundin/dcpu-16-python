@@ -1,3 +1,4 @@
+from ctypes import c_int16, c_uint16
 from values import value_lookup
 from constants import OPCODE
 from utils import unpack_instruction, unpack_special_instruction
@@ -14,16 +15,23 @@ class Emulator(object):
             OPCODE.MUL: self.MUL,
             OPCODE.MLI: self.MLI,
             OPCODE.DIV: self.DIV,
+            OPCODE.DVI: self.DVI,
             OPCODE.MOD: self.MOD,
-            OPCODE.SHL: self.SHL,
-            OPCODE.SHR: self.SHR,
+            OPCODE.MDI: self.MDI,
             OPCODE.AND: self.AND,
             OPCODE.BOR: self.BOR,
             OPCODE.XOR: self.XOR,
+            OPCODE.SHR: self.SHR,
+            OPCODE.ASR: self.ASR,
+            OPCODE.SHL: self.SHL,
+            OPCODE.IFB: self.IFB,
+            OPCODE.IFC: self.IFC,
             OPCODE.IFE: self.IFE,
             OPCODE.IFN: self.IFN,
             OPCODE.IFG: self.IFG,
-            OPCODE.IFB: self.IFB,
+            OPCODE.IFA: self.IFA,
+            OPCODE.IFL: self.IFL,
+            OPCODE.IFU: self.IFU,
         }
 
 
@@ -73,14 +81,14 @@ class Emulator(object):
     def MUL(self, b, a):
         res = b.value * a.value
         self.cpu.EX.value = ((res >> 16) & 0xffff)
-        res = res & 0xffff
         b.value = res
 
     def MLI(self, b, a):
-        res = b.value * a.value
-        self.cpu.EX.value = ((res >> 16) & 0xffff)
-        res = res & 0xffff
-        b.value = res
+        a_signed = c_int16(a.value)
+        b_signed = c_int16(b.value)
+        res = c_uint16(b_signed.value * a_signed.value)
+        self.cpu.EX.value = ((res.value >> 16) & 0xffff)
+        b.value = res.value
 
     def DIV(self, b, a):
         if a.value == 0:
@@ -89,16 +97,24 @@ class Emulator(object):
         b.value = bval / a.value
         self.cpu.EX.value = ((bval << 16) / a.value) & 0xffff
 
+    def DVI(self, b, a):
+        if a.value == 0:
+            b.value = 0
+        b_signed = c_int16(b.value)
+        a_signed = c_int16(a.value)
+        b.value = b_signed.value / a_signed.value
+        self.cpu.EX.value = ((b_signed.value << 16) / a.value) & 0xffff
+
     def MOD(self, b, a):
+        if a.value == 0:
+            b.value = 0
         b.value = b.value % a.value
 
-    def SHL(self, b, a):
-        b.value = b.value << a.value
-        self.cpu.EX.vale = (b.value << a.value >> 16) & 0xfff
-
-    def SHR(self, b, a):
-        b.value = b.value >> a.value
-        self.cpu.EX.value = (b.value << 16) >> a.value & 0xfff
+    def MDI(self, b, a):
+        if c_int16(b.value).value < 0:
+            b.value = b.value
+        else:
+            b.value = b.value % a.value
 
     def AND(self, b, a):
         b.value = b.value & a.value
@@ -108,6 +124,27 @@ class Emulator(object):
 
     def XOR(self, b, a):
         b.value = b.value ^ a.value
+
+    def SHR(self, b, a):
+        b.value = b.value >> a.value
+        self.cpu.EX.value = (b.value << 16) >> a.value & 0xffff
+
+    def ASR(self, b, a):
+        b_signed = c_int16(b.value)
+        b.value = b_signed.value >> a.value
+        self.cpu.EX.value = (b_signed.value << 16) >> a.value & 0xffff
+
+    def SHL(self, b, a):
+        b.value = b.value << a.value
+        self.cpu.EX.vale = (b.value << a.value >> 16) & 0xffff
+
+    def IFB(self, b, a):
+        if not (a.value & b.value) != 0:
+            self.cpu.skip_instruction = True
+
+    def IFC(self, b, a):
+        if not (a.value & b.value) == 0:
+            self.cpu.skip_instruction = True
 
     def IFE(self, b, a):
         if a.value != b.value:
@@ -120,8 +157,16 @@ class Emulator(object):
         if b.value <= a.value:
             self.cpu.skip_instruction = True
 
-    def IFB(self, b, a):
-        if not (a.value & b.value) != 0:
+    def IFA(self, b, a):
+        if c_int16(b.value).value <= c_int16(a.value).value:
+            self.cpu.skip_instruction = True
+
+    def IFL(self, b, a):
+        if b.value >= a.value:
+            self.cpu.skip_instruction = True
+
+    def IFU(self, b, a):
+        if c_int16(b.value).value >= c_int16(a.value).value:
             self.cpu.skip_instruction = True
 
     def non_basic(self, instruction):

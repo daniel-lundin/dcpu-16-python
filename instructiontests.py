@@ -1,5 +1,6 @@
 import random
 import unittest
+from ctypes import c_int16
 
 from cpu import CPU
 from emulator import Emulator
@@ -98,6 +99,21 @@ class TestInstructions(unittest.TestCase):
         self.assertTrue(self.cpu.registers[REG.A].value == 0xfffe, "Mul failed")
         self.assertTrue(self.cpu.EX.value == 0x1, "Ex flag not set")
 
+    def test_mli(self):
+        """ Sets REG.A to REG.A * REG.B, treats A,B as signed """
+        self.cpu.registers[REG.A].value = -5
+        self.cpu.registers[REG.B].value = -4
+
+        # MLI A, B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.MLI,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        signed_result = c_int16(self.cpu.registers[REG.A].value)
+        self.assertEqual(signed_result.value, 20, "MLI failed")
+        self.assertTrue(self.cpu.EX.value == 0x0, "Ex flag not reset")
+
     def test_div(self):
         """ Sets REG.A to REG.A / REG.B """
         self.cpu.registers[REG.A].value = 0x0009
@@ -110,6 +126,19 @@ class TestInstructions(unittest.TestCase):
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x4, "Div failed")
+
+    def test_dvi(self):
+        """ Sets REG.A to REG.A / REG.B """
+        self.cpu.registers[REG.A].value = -4
+        self.cpu.registers[REG.B].value = -2
+
+        # DVI A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.DVI,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertTrue(self.cpu.registers[REG.A].value == 2, "Div failed")
 
     def test_mod(self):
         """ Sets REG.A to REG.A % REG.B """
@@ -124,6 +153,20 @@ class TestInstructions(unittest.TestCase):
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x1, "Mod failed")
 
+    def test_mdi(self):
+        """ Sets REG.A to REG.A % REG.B """
+        self.cpu.registers[REG.A].value = -7
+        self.cpu.registers[REG.B].value = 16
+
+        # MDI A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.MDI,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        signed_result = c_int16(self.cpu.registers[REG.A].value)
+        self.assertEqual(signed_result.value, -7, "MDI failed")
+
     def test_shl(self):
         """ Sets REG.A to REG.A << REG.B """
         self.cpu.registers[REG.A].value = 0x0008
@@ -136,6 +179,20 @@ class TestInstructions(unittest.TestCase):
         self.emulator.dispatch()
 
         self.assertTrue(self.cpu.registers[REG.A].value == 0x20, "shl failed")
+
+    def test_asr(self):
+        """ Sets REG.A to REG.A << REG.B """
+        self.cpu.registers[REG.A].value = -3
+        self.cpu.registers[REG.B].value = 2
+
+        # ASR A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.ASR,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        signed_result = c_int16(self.cpu.registers[REG.A].value)
+        self.assertEqual(signed_result.value, -1, "ASR failed")
 
     def test_shr(self):
         """ Sets REG.A to REGREG.> REG.B """
@@ -213,6 +270,19 @@ class TestInstructions(unittest.TestCase):
 
         self.assertEqual(self.cpu.skip_instruction, True, "Skip error")
 
+    def test_ifc_equal(self):
+        self.cpu.registers[REG.A].value = 0x0000
+        self.cpu.registers[REG.B].value = 0x00ff
+
+        # IFC A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFC,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.skip_instruction, False, "PC not set right")
+
+
     def test_ifn_false(self):
         self.cpu.registers[REG.A].value = 0x00ff
         self.cpu.registers[REG.B].value = 0x00ff
@@ -284,6 +354,42 @@ class TestInstructions(unittest.TestCase):
         self.emulator.dispatch()
 
         self.assertEqual(self.cpu.skip_instruction, True, "Skip error")
+
+    def test_ifa_true(self):
+        self.cpu.registers[REG.A].value = 3
+        self.cpu.registers[REG.B].value = -4
+
+        # IFN A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFA,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.skip_instruction, False, "IFA failed")
+
+    def test_ifl(self):
+        self.cpu.registers[REG.A].value = 3
+        self.cpu.registers[REG.B].value = -4
+
+        # IFL A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFA,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.skip_instruction, False, "IFL failed")
+
+    def test_ifu(self):
+        self.cpu.registers[REG.A].value = 3
+        self.cpu.registers[REG.B].value = -4
+
+        # IFU A,B
+        self.cpu.ram[0].value = pack_instruction(op_code=OPCODE.IFU,
+                                                 a=Value.reg(REG.A),
+                                                 b=Value.reg(REG.B))
+        self.emulator.dispatch()
+
+        self.assertEqual(self.cpu.skip_instruction, True, "IFU failed")
 
     def test_jsr(self):
         self.cpu.registers[REG.I].value = 0x2323 # PC should be set to this
